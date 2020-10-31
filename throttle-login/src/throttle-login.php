@@ -17,8 +17,6 @@ class ThrottleLogin
     add_action('register_form', array($this, 'recaptchaForm'), 99);
     add_action('signup_extra_fields', array($this, 'recaptchaForm'), 99);
     add_action('lostpassword_form', array($this, 'recaptchaForm'));
-
-
   }
 
   public function registerMenuPage()
@@ -87,50 +85,58 @@ class ThrottleLogin
     return false;
   }
 
-  public function recaptchaForm() {
-    echo sprintf('<div class="g-recaptcha" id="g-recaptcha" data-sitekey="%s" data-callback="submitEnable" data-expired-callback="submitDisable"></div>', get_option('tl_recaptcha_key'))."\n";
-    echo '<script>'."\n";
-    echo "function submitEnable() {\n";
-    echo "var button = document.getElementById('wp-submit');\n";
-    echo "if (button === null) {\n";
-    echo "button = document.getElementById('submit');\n";
-    echo "}\n";
-    echo "if (button !== null) {\n";
-    echo "button.removeAttribute('disabled');\n";
-    echo "}\n";
-    echo "     }\n";
-    echo "function submitDisable() {\n";
-    echo "var button = document.getElementById('wp-submit');\n";
-    // do not disable button with id "submit" in admin context, as this is the settings submit button
-    if (!is_admin()) {
+  public function recaptchaForm()
+  {
+    if (true === $this->isWhiteList()) {
+      update_option('tl_recaptcha_notice', time());
+      update_option('tl_recaptcha_message_type', 'notice-info');
+      update_option('tl_recaptcha_error', sprintf('Captcha bypassed by whitelist for ip address %s', $this->getIPAddress()));
+      echo '<p style="color: red; font-weight: bold;">' . sprintf('Captcha bypassed by whitelist for ip address %s', $this->getIPAddress()) . '</p>';
+    } else {
+      echo sprintf('<div class="g-recaptcha" id="g-recaptcha" data-sitekey="%s" data-callback="submitEnable" data-expired-callback="submitDisable"></div>', get_option('tl_recaptcha_key')) . "\n";
+      echo '<script>' . "\n";
+      echo "function submitEnable() {\n";
+      echo "var button = document.getElementById('wp-submit');\n";
+      echo "if (button === null) {\n";
+      echo "button = document.getElementById('submit');\n";
+      echo "}\n";
+      echo "if (button !== null) {\n";
+      echo "button.removeAttribute('disabled');\n";
+      echo "}\n";
+      echo "     }\n";
+      echo "function submitDisable() {\n";
+      echo "var button = document.getElementById('wp-submit');\n";
+      // do not disable button with id "submit" in admin context, as this is the settings submit button
+      if (!is_admin()) {
         echo "if (button === null) {\n";
         echo "button = document.getElementById('submit');\n";
         echo "}\n";
+      }
+      echo "if (button !== null) {\n";
+      echo "button.setAttribute('disabled','disabled');\n";
+      echo "}\n";
+      echo " }\n";
+      echo '</script>' . "\n";
+      echo '<noscript>' . "\n";
+      echo '<div style="width: 100%; height: 473px;">' . "\n";
+      echo '<div style="width: 100%; height: 422px; position: relative;">' . "\n";
+      echo '<div style="width: 302px; height: 422px; position: relative;">' . "\n";
+      echo sprintf('<iframe src="https://www.google.com/recaptcha/api/fallback?k=%s"', get_option('tl_recaptcha_key')) . "\n";
+      echo 'frameborder="0" title="captcha" scrolling="no"' . "\n";
+      echo 'style="width: 302px; height:422px; border-style: none;">' . "\n";
+      echo '</iframe>' . "\n";
+      echo '</div>' . "\n";
+      echo '<div style="width: 100%; height: 60px; border-style: none;' . "\n";
+      echo 'bottom: 12px; left: 25px; margin: 0px; padding: 0px; right: 25px; background: #f9f9f9; border: 1px solid #c1c1c1; border-radius: 3px;">' . "\n";
+      echo '<textarea id="g-recaptcha-response" name="g-recaptcha-response"' . "\n";
+      echo 'title="response" class="g-recaptcha-response"' . "\n";
+      echo 'style="width: 250px; height: 40px; border: 1px solid #c1c1c1;' . "\n";
+      echo 'margin: 10px 25px; padding: 0px; resize: none;" value="">' . "\n";
+      echo '</textarea>' . "\n";
+      echo '</div>' . "\n";
+      echo '</div>' . "\n";
+      echo '</div><br>' . "\n";
+      echo '</noscript>' . "\n";
     }
-    echo "if (button !== null) {\n";
-    echo "button.setAttribute('disabled','disabled');\n";
-    echo "}\n";
-    echo " }\n";
-    echo '</script>'."\n";
-    echo '<noscript>'."\n";
-    echo '<div style="width: 100%; height: 473px;">'."\n";
-    echo '<div style="width: 100%; height: 422px; position: relative;">'."\n";
-    echo '<div style="width: 302px; height: 422px; position: relative;">'."\n";
-    echo sprintf('<iframe src="https://www.google.com/recaptcha/api/fallback?k=%s"', get_option('tl_recaptcha_key'))."\n";
-    echo 'frameborder="0" title="captcha" scrolling="no"'."\n";
-    echo 'style="width: 302px; height:422px; border-style: none;">'."\n";
-    echo '</iframe>'."\n";
-    echo '</div>'."\n";
-    echo '<div style="width: 100%; height: 60px; border-style: none;'."\n";
-    echo 'bottom: 12px; left: 25px; margin: 0px; padding: 0px; right: 25px; background: #f9f9f9; border: 1px solid #c1c1c1; border-radius: 3px;">'."\n";
-    echo '<textarea id="g-recaptcha-response" name="g-recaptcha-response"'."\n";
-    echo 'title="response" class="g-recaptcha-response"'."\n";
-    echo 'style="width: 250px; height: 40px; border: 1px solid #c1c1c1;'."\n";
-    echo 'margin: 10px 25px; padding: 0px; resize: none;" value="">'."\n";
-    echo '</textarea>'."\n";
-    echo '</div>'."\n";
-    echo '</div>'."\n";
-    echo '</div><br>'."\n";
-    echo '</noscript>'."\n";
   }
 }
